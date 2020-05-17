@@ -242,20 +242,12 @@ int main() {
                     // move left
                     if ((cost_1 < cost_2) && (lane > 0)) 
                 		{
-                        std::cout << "lane : " << lane << std::endl;
-                        std::cout << "cost_1 : " << cost_1 << std::endl;
-                        std::cout << "cost_2 : " << cost_2 << std::endl;
-                        std::cout << "cost_3 : " << cost_3 << std::endl;
                         std::cout << "LANE CHANGE minus"<< std::endl ;
                 	 	lane = lane - 1;
                 		}
                 	// move right
                		if ((cost_3 < cost_2) && (cost_3< cost_1) && (lane <2))
                         {
-                          std::cout << "lane : " << lane << std::endl;
-                          std::cout << "cost_1 : " << cost_1 << std::endl;
-                          std::cout << "cost_2 : " << cost_2 << std::endl;
-                          std::cout << "cost_3 : " << cost_3 << std::endl;
                           std::cout << "LANE CHANGE plus"<< std::endl ;
                           lane = lane + 1;
                         }
