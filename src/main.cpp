@@ -113,12 +113,16 @@ int main() {
           // Create bool flag incase too close to other car. 
           bool too_close = false;
           
+          float cost_1 = 0;
+          float cost_2 = 0;
+          float cost_3 = 0;
+          
           // look at each of the cars from the sensor fusion.
           for(int i = 0; i<sensor_fusion.size(); i++)
           {
             // find car in our lane
             float d = sensor_fusion[i][6];
-            if (d<((2+4)*lane+2) && d>((2+4)*lane-2))
+            if (d<(2+4*lane+2) && d>(2+4*lane-2))
             {
               double vx = sensor_fusion[i][3];
               double vy = sensor_fusion[i][4];
@@ -135,6 +139,84 @@ int main() {
                 // slow the car down
                 //ref_vel = 29.5;  //mph
                 too_close = true;  
+                
+                // Advanced Lane changing. 
+                
+                
+                // psuedo finite state machine. // If we're too close to car in front what options do we have
+                // Calculate the cost function for each and select the one with the lowest cost.
+               
+                // 1. Move left
+                	//is there a left lane - if not 1000
+                     if (lane > 0)
+               		 {
+                            // look at each of the cars from the sensor fusion.
+                            for(int i = 0; i<sensor_fusion.size(); i++)
+                            {
+                              // find car in our lane
+                              float d = sensor_fusion[i][6];
+                              if (d<(2+4*(lane-1)+2) && d>(2+4*(lane-1)-2))
+                              {
+                                double vx = sensor_fusion[i][3];
+                                double vy = sensor_fusion[i][4];
+                                double check_speed = sqrt(vx*vx+vy*vy);
+                                double check_car_s = sensor_fusion[i][5];
+
+
+                               //check whether the car in other lane within +-30 meters of us. 
+                               // Absolute
+                                if((abs(check_car_s - car_s) < 30)) 
+                                {
+                                  cost_1 = 1000;
+                                }
+
+                              }
+                            }
+                     }
+                	else
+                    {
+                    cost_1 = 1000;
+                    }
+        
+                // 2. stay in lane
+                	//slow down - cost 400
+                	// not going to have a prepare to move left/ prepare to move right. this is the same idea.
+                	cost_2 = 300;
+                // 3. Move right
+                	//is there a right lane - if not 1000
+                	//is there a car in right lane- yes 1000
+ 					// need to make different to left. scale cost with how near car is in right lane. 
+ 					if (lane < 3)
+               		 {
+                            // look at each of the cars from the sensor fusion.
+                            for(int i = 0; i<sensor_fusion.size(); i++)
+                            {
+                              // find car in our lane
+                              float d = sensor_fusion[i][6];
+                              if (d<(2+4*(lane+1)+2) && d>(2+4*(lane+1)-2))
+                              {
+                                double vx = sensor_fusion[i][3];
+                                double vy = sensor_fusion[i][4];
+                                double check_speed = sqrt(vx*vx+vy*vy);
+                                double check_car_s = sensor_fusion[i][5];
+
+
+                               //check whether the car in other lane within +-30 meters of us. 
+                               // Absolute
+                                if((abs(check_car_s - car_s) < 30))
+                                {
+                                  cost_3 = 1000;
+                                }
+                              }
+                            }
+                     }
+                	else
+                    {
+                    cost_3 = 1000;
+                    }
+              
+                
+                
                 
 
                 }
@@ -154,6 +236,29 @@ int main() {
           }
           
           
+ 
+          
+          // Pick the action with the lowest cost.
+                    // move left
+                    if ((cost_1 < cost_2) && (lane > 0)) 
+                		{
+                        std::cout << "lane : " << lane << std::endl;
+                        std::cout << "cost_1 : " << cost_1 << std::endl;
+                        std::cout << "cost_2 : " << cost_2 << std::endl;
+                        std::cout << "cost_3 : " << cost_3 << std::endl;
+                        std::cout << "LANE CHANGE minus"<< std::endl ;
+                	 	lane = lane - 1;
+                		}
+                	// move right
+               		if ((cost_3 < cost_2) && (cost_3< cost_1) && (lane <2))
+                        {
+                          std::cout << "lane : " << lane << std::endl;
+                          std::cout << "cost_1 : " << cost_1 << std::endl;
+                          std::cout << "cost_2 : " << cost_2 << std::endl;
+                          std::cout << "cost_3 : " << cost_3 << std::endl;
+                          std::cout << "LANE CHANGE plus"<< std::endl ;
+                          lane = lane + 1;
+                        }
           
           
           // create list of widely spaced x y points
@@ -227,10 +332,8 @@ int main() {
           tk::spline s;
           
           // set points
-          std::cout << ptsx.size() << std::endl;
-          std::cout << ptsy.size() << std::endl;
+
           s.set_points(ptsx, ptsy);
-          std::cout << "after spline" << std::endl;
           // define te actual (x,y) points
           vector<double> next_x_vals;
           vector<double> next_y_vals;
