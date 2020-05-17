@@ -53,15 +53,9 @@ int main() {
   // start in lane 1
   int lane = 1;
   
-  // Have a reference velocity to target
-  double ref_vel = 49.5;  // mph
+  // Have a initial value for the reference velocity.
+  double ref_vel = 0;  // mph
     
-    
-
-  
-
-  
-
   h.onMessage([&ref_vel, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
                &map_waypoints_dx,&map_waypoints_dy, &lane]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -109,13 +103,14 @@ int main() {
            *   sequentially every .02 seconds
            */
           
+          // Check the size of the previous path.
           
-          /*
+          
           if(prev_size > 0 )
           {
             car_s = end_path_s;
           }
-          
+          // Create bool flag incase too close to other car. 
           bool too_close = false;
           
           // look at each of the cars from the sensor fusion.
@@ -123,12 +118,40 @@ int main() {
           {
             // find car in our lane
             float d = sensor_fusion[i][6];
-            if (d<(s+4*lane+2) && d>(2+4*lane-2))
+            if (d<((2+4)*lane+2) && d>((2+4)*lane-2))
             {
-              double vx = snesor_fusion[i][3];
+              double vx = sensor_fusion[i][3];
               double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx*vx+vy*vy)
-          */
+              double check_speed = sqrt(vx*vx+vy*vy);
+              double check_car_s = sensor_fusion[i][5];
+         
+              check_car_s +=((double)prev_size*0.02*check_speed);
+              
+              //check whether the car is within 30 meters of us. 
+              if((check_car_s > car_s) && ((check_car_s - car_s) < 30))
+                
+              {
+                
+                // slow the car down
+                //ref_vel = 29.5;  //mph
+                too_close = true;  
+                
+
+                }
+            }
+            
+          }
+         
+          
+          if(too_close)
+          {
+            std::cout << "too close" << std::endl;
+            ref_vel -=0.224;
+          }
+          else if(ref_vel < 49.5)
+          {
+            ref_vel += 0.224;
+          }
           
           
           
@@ -204,9 +227,10 @@ int main() {
           tk::spline s;
           
           // set points
-          
+          std::cout << ptsx.size() << std::endl;
+          std::cout << ptsy.size() << std::endl;
           s.set_points(ptsx, ptsy);
-          
+          std::cout << "after spline" << std::endl;
           // define te actual (x,y) points
           vector<double> next_x_vals;
           vector<double> next_y_vals;
@@ -227,7 +251,7 @@ int main() {
           
           // fill up the rest of the path planner
           
-          for (int i=1; i<50-previous_path_x.size(); i++) 
+          for (int i=1; i<=50-previous_path_x.size(); i++) 
           {
           	double N = (target_dist/(0.02*ref_vel/2.24));
             double x_point = x_add_on + (target_x)/ N;
